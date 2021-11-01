@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/justinas/nosurf"
+	"thiennd.net/snippetbox/pkg/models"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
@@ -46,6 +49,16 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
+	td.CSRFToken = nosurf.Token(r)
+	td.AuthenticatedUser = app.AuthenticatedUser(r)
 	td.Flash = app.session.PopString(r, "flash")
 	return td
+}
+
+func (app *application) AuthenticatedUser(r *http.Request) *models.User {
+	user, ok := r.Context().Value(contextKeyUser).(*models.User)
+	if !ok {
+		return nil
+	}
+	return user
 }
